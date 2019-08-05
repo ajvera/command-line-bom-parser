@@ -59,7 +59,7 @@ def parse():
         idx += 1
     
     # Print!
-    print(json.dumps(outputList, indent=4))
+    print(json.dumps(outputList, sort_keys=True, indent=4))
 
 
 class BOM:
@@ -67,44 +67,35 @@ class BOM:
 
     """Dictionary of RegEx patterns for idenifying input format."""
     formatVersionRxDict = {
-            1: re.compile(r'([^:]*:[^:]*:[^:]*)'),
-            2: re.compile(r'([^ -- ]* -- [^:]*:[^:]*)'),
-            3: re.compile(r'([^;]*;[^;]*;[^;]*)'),
+            1: re.compile(r'(?P<MPN>[^:]*):(?P<Manufacturer>[^:]*):(?P<ReferenceDesignators>[^:]*)'),
+            2: re.compile(r'(?P<Manufacturer>[^ -- ]*) -- (?P<MPN>[^:]*):(?P<ReferenceDesignators>[^:]*)'),
+            3: re.compile(r'(?P<ReferenceDesignators>[^;]*);(?P<MPN>[^;]*);(?P<Manufacturer>[^;]*)'),
         }
     
-    """Matches the input string with the appropriate RegEx pattern."""
+    """Matches the input format with RegEx pattern and returns MatchObject."""
     def parseFormatVersion(self, originalBOMString):
         for key, rx in self.formatVersionRxDict.items():
             match = rx.search(originalBOMString)
             if match:
-                return key
+                return match
 
         return None
 
-    """Sets class variables for BOM data based on input string and format"""
-    def setBOMData(self, originalBOMString, formatVersion):
-        if formatVersion == 1:
-            bomArray = originalBOMString.split(':')
-            self.MPN = bomArray[0]
-            self.Manufacturer = bomArray[1]
-            self.ReferenceDesignators = bomArray[2].split(',')
-        elif formatVersion == 2:
-            bomArray = originalBOMString.split(' -- ')
-            self.MPN = bomArray[1].split(':')[0]
-            self.Manufacturer = bomArray[0]
-            self.ReferenceDesignators = bomArray[1].split(':')[1].split(',')
-        elif formatVersion == 3:
-            bomArray = originalBOMString.split(';')
-            self.MPN = bomArray[1]
-            self.Manufacturer = bomArray[2]
-            self.ReferenceDesignators = bomArray[0].split(',')
-        
+    """Sets class variables for BOM instance.
+
+    Keyword arguments:
+    match -- MatchObject from regex format
+    """
+    def setBOMData(self, match):
+        self.MPN = match.group('MPN')
+        self.Manufacturer = match.group('Manufacturer')
+        self.ReferenceDesignators = match.group('ReferenceDesignators').split(',')
         self.NumOccurrences = 1
 
     """Class initializer responsible for instantiating BOM objects"""
     def __init__(self, originalBOMString):
-        formatVersion = self.parseFormatVersion(originalBOMString)
-        self.setBOMData(originalBOMString, formatVersion)
+        match = self.parseFormatVersion(originalBOMString)
+        self.setBOMData(match)
 
 
 

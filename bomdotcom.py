@@ -4,15 +4,26 @@ import re
 
 
 def parse():
+    firstLine = True
+    bomCollection = []
+    output = 0
     for line in sys.stdin:
-        if line.rstrip == 2:
-            continue
-        bom = BOM(line.rstrip())
-        print(bom.mpn)
-        print(bom.manufacturer)
-        print(bom.referenceDesignators)
-        print('\n')
+        if not firstLine:
+            bomCollection.append(BOM(line.rstrip()))
 
+        else:
+            output = line.rstrip()
+            firstLine = False
+    
+    print('Begin BOM data output')
+    idx = 0
+    while idx <= int(output):
+        bom = bomCollection[idx]
+        print("MPN: " + bom.mpn)
+        print("Manufacturer: " + bom.manufacturer)
+        print("Reference Designators: " + str(bom.referenceDesignators))
+        print('\n')
+        idx += 1
 
 class BOM:
     """ A basic class to encapsulate BOM data from a variety of formats"""
